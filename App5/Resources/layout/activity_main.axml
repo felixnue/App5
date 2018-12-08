@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:text="NUMBER"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="18.5dp"
+        android:id="@+id/textViewNumber"
+        android:layout_above="@id/textViewNumber"
+        android:layout_marginTop="0.0dp"
+        android:imeOptions="actionGo" />
+    <EditText
+        android:layout_width="127.0dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewNumber"
+        android:id="@+id/editTextNumber"
+        android:freezesText="true"
+        android:singleLine="true"
+        android:inputType="none|number"
+        android:maxLength="5" />
+    <TextView
+        android:text="..."
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/editTextNumber"
+        android:id="@+id/textViewOutput"
+        android:scrollbars="vertical"
+        android:maxLines="30"
+        android:freezesText="true" />
+    <Button
+        android:text="GET HTML"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/editTextNumber"
+        android:id="@+id/buttonSearch" />
+</RelativeLayout>
