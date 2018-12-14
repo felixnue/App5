@@ -181,6 +181,8 @@ namespace LeoWinner
                     if (child.NodeType == HtmlNodeType.Element && child.Name == "li")
                     {
                         Price price = GetPriceDecriptionAndNumbers(child);
+                       
+
                         price.Day = day;
                         pricesOfDay.Add(price);
                     }
@@ -203,6 +205,8 @@ namespace LeoWinner
             return node;
         }
 
+        
+
         private static Price GetPriceDecriptionAndNumbers(HtmlNode htmlNode)
         {
             Price price = new Price();
@@ -220,39 +224,57 @@ namespace LeoWinner
             }
             if (textNodes.Count >= 2)
             {
-                price = ParsePriceFromTexts( textNodes);
+                price = ParsePriceFrom2Texts( textNodes);
             }
             else if (textNodes.Count == 1) // WORKAORUND if there is no <br> -> only one text field -> seperate by the ":" 
                                            // TODO: sonething more intelligent that analyzes if strings are numbers as well
             {
                 string[] newTexts = textNodes[0].Split(new[] { ':' });
-                price = ParsePriceFromTexts( newTexts.ToList());
+                price = ParsePriceFrom2Texts( newTexts.ToList());
             }
-            // TODO: ERROR handling..
+
+            if (!price.Numbers.Any()) //Error handling try differently, if the numbers are not inside the <li> element!
+            {
+                // All following Textnodes are considered to contain numbers potentially..
+
+                var textsOfAllSiblings = GetTextsOfAllTextElementsInSiblings(htmlNode.NextSibling);
+                price.Numbers = ParseAllNumbers(textsOfAllSiblings);
+            }
 
             return price;
         }
 
-        private static Price ParsePriceFromTexts(List<string> texts)
+       
+
+        private static List<string> GetTextsOfAllTextElementsInSiblings(HtmlNode node)
+        {
+            List<string> texts = new List<string>();
+            while (node != null)
+            {
+                //Console.WriteLine("Nodes next sibling: "+ node.OuterHtml);						
+                if(node.NodeType == HtmlNodeType.Text)
+                {
+                    texts.Add( node.InnerText );
+                    Console.WriteLine("New node of type " + node.NodeType + " found!!!: " + node.OuterHtml);
+                    //break;
+                }
+                node = node.NextSibling;
+            }
+
+            return texts;
+        }
+
+        private static Price ParsePriceFrom2Texts(List<string> texts)
         {
             Price price = new Price();
-            string description = texts[0];
-            description = description.Trim();
-            if (description.Last() == ':')
-            {
-                description = description.Remove(description.Length - 1); // remove last 
-            }
+
+            string description  = ParseDescription(texts.First());
+                       
 
             if (!string.IsNullOrEmpty(description))
             {
-                price.Description = texts[0];
-                string priceNumbers = texts[1].Replace("\n", String.Empty);
-                priceNumbers = priceNumbers.Replace(" ", "");
-                var numbers = priceNumbers.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var num in numbers)
-                {
-                    price.Numbers.Add(num);                  
-                }
+                price.Description = description;
+               price.Numbers = ParseNumbers(texts[1]);
             }
             else
             {
@@ -260,6 +282,37 @@ namespace LeoWinner
             }
             return price;
         }
-    
+
+        private static IList<string> ParseAllNumbers(List<string> textsOfAllSiblings)
+        {
+            List<string> numbbers = new List<string>();
+            foreach(var text in textsOfAllSiblings.Where(x => !string.IsNullOrEmpty(x)))
+            {               
+                numbbers.AddRange(ParseNumbers(text));
+            }
+
+            return numbbers;
+        }
+
+        private static IList<string> ParseNumbers(string text)
+        {
+            string priceNumbers = text.Replace("\n", String.Empty);
+            priceNumbers = priceNumbers.Replace(" ", "");
+            List<string> numbers = priceNumbers.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            return numbers;
+        }
+
+        private static string ParseDescription(string text)
+        {
+            string description = text;
+            description = description.Trim();
+            if (description.Last() == ':')
+            {
+                description = description.Remove(description.Length - 1); // remove last 
+            }           
+
+            return description;
+        }
     }
 }

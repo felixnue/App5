@@ -42,7 +42,7 @@ namespace LeoWinner
             Button buttonAlarm = FindViewById<Button>(Resource.Id.buttonAlarm);
             buttonAlarm.Click += OnButtonAlarmCLick;
 
-        }        
+        }
 
         private async void OnTextNumberSEarch_KeyPress(object sender, Android.Views.View.KeyEventArgs e)
         {
@@ -51,7 +51,7 @@ namespace LeoWinner
             {
                 try
                 {
-                    if(string.IsNullOrEmpty(myHtml))
+                    if (string.IsNullOrEmpty(myHtml))
                     {
                         await RefreshHtml();
                     }
@@ -96,39 +96,46 @@ namespace LeoWinner
 
         private void OnButtonAlarmCLick(object sender, EventArgs e)
         {
-            if(string.IsNullOrEmpty( myTextNumberSearch.Text) ) { return; }
+            if (string.IsNullOrEmpty(myTextNumberSearch.Text)) { return; }
 
-            SetRepeatingAlarm(myTextNumberSearch.Text);
+            SetRepeatingAlarm(myTextNumberSearch.Text);            
         }
 
         private void SetRepeatingAlarm(string number)
         {
+            int numberAsInt = -1;
+            if(!Int32.TryParse(number, out numberAsInt))
+            {
+                return;
+            }
+
             //GET TIME IN SECONDS AND INITIALIZE INTENT
 
             Intent receiverIntent = new Intent(this, typeof(AlarmReceiver));
             receiverIntent.PutExtra("number", number);
 
             //PASS CONTEXT,YOUR PRIVATE REQUEST CODE,INTENT OBJECT AND FLAG
-            PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, 0, receiverIntent, PendingIntentFlags.CancelCurrent);
-
+            PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, numberAsInt, receiverIntent, PendingIntentFlags.OneShot);
+            
             //INITIALIZE ALARM MANAGER
             AlarmManager alarmManager = (AlarmManager)GetSystemService(AlarmService);
 
             Calendar calendar = Calendar.Instance;
             calendar.TimeInMillis = (JavaSystem.CurrentTimeMillis());
             //calendar.Add(CalendarField.Second, secondsTillAlarm);
-            calendar.Add(CalendarField.DayOfYear, 1); // tomorrow            
+            //calendar.Add(CalendarField.DayOfYear, 1); // tomorrow            
             calendar.Set(CalendarField.HourOfDay, 8);
             calendar.Set(CalendarField.Minute, 15); // 15 min
+            
 
             //SET THE ALARM
 
-            // alarmManager.Set(AlarmType.RtcWakeup, JavaSystem.CurrentTimeMillis() + (5 * 1000), pendingIntent);
-              alarmManager.SetInexactRepeating(AlarmType.RtcWakeup, calendar.TimeInMillis, AlarmManager.IntervalDay , pendingIntent);
+            //alarmManager.Set(AlarmType.RtcWakeup, JavaSystem.CurrentTimeMillis() + (10 * 1000), pendingIntent);
+            alarmManager.SetInexactRepeating(AlarmType.RtcWakeup, calendar.TimeInMillis, AlarmManager.IntervalDay , pendingIntent);
 
-            myTextViewOutput.Text = number + ": Repeating daily Alarm set. Next at: " + calendar.Time.ToString();
-          //  Toast.MakeText(this, ToastLength.Long).Show();
-          
+           // myTextViewOutput.Text = number + ": Repeating daily Alarm set. Next at: " + calendar.Time.ToString();
+            //  Toast.MakeText(this, ToastLength.Long).Show();
+
         }
     }
 }
