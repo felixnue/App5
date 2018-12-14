@@ -33,9 +33,15 @@
         android:maxLines="30"
         android:freezesText="true" />
     <Button
-        android:text="GET HTML"
+        android:text="Refresh"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/editTextNumber"
-        android:id="@+id/buttonSearch" />
+        android:id="@+id/buttonRefresh" />
+    <Button
+        android:text="Alarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/buttonRefresh"
+        android:id="@+id/buttonAlarm" />
 </RelativeLayout>
