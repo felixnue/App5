@@ -4,44 +4,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <TextView
-        android:text="NUMBER"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="18.5dp"
-        android:id="@+id/textViewNumber"
-        android:layout_above="@id/textViewNumber"
-        android:layout_marginTop="0.0dp"
-        android:imeOptions="actionGo" />
-    <EditText
-        android:layout_width="127.0dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/textViewNumber"
-        android:id="@+id/editTextNumber"
-        android:freezesText="true"
-        android:singleLine="true"
-        android:inputType="none|number"
-        android:maxLength="5" />
-    <TextView
-        android:text="..."
-        android:textAppearance="?android:attr/textAppearanceSmall"
+    <LinearLayout
+        android:orientation="vertical"
+        android:minWidth="25px"
+        android:minHeight="25px"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/editTextNumber"
-        android:id="@+id/textViewOutput"
-        android:scrollbars="vertical"
-        android:maxLines="30"
-        android:freezesText="true" />
-    <Button
-        android:text="Refresh"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/editTextNumber"
-        android:id="@+id/buttonRefresh" />
-    <Button
-        android:text="Alarm"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/buttonRefresh"
-        android:id="@+id/buttonAlarm" />
+        android:id="@+id/linearLayout1">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:minWidth="25px"
+            android:minHeight="25px"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/linearLayout2">
+            <TextView
+                android:text="NUMBER"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:id="@+id/textViewNumber"
+                android:imeOptions="actionGo"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+            <EditText
+                android:id="@+id/editTextNumber"
+                android:freezesText="true"
+                android:singleLine="true"
+                android:inputType="none|number"
+                android:maxLength="5"
+                android:layout_width="103.0dp"
+                android:layout_height="match_parent"
+                android:layout_marginRight="0.0dp"
+                android:numeric="integer" />
+            <Button
+                android:text="Add"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/buttonAddNumber" />
+            <Button
+                android:text="Delete"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/buttonDeleteNumber" />
+        </LinearLayout>
+        <TextView
+            android:text="(numbers)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textViewNumbers" />
+        <Button
+            android:text="Alarm"
+            android:id="@+id/buttonAlarm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <Button
+            android:text="Refresh"
+            android:id="@+id/buttonRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <TextView
+            android:text="..."
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/textViewOutput"
+            android:scrollbars="vertical"
+            android:maxLines="30"
+            android:freezesText="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 </RelativeLayout>

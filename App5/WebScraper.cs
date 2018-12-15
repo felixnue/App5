@@ -28,6 +28,9 @@ namespace LeoWinner
 
         public static string GetAllPrices(string searchNumber, string htmlString)
         {
+            var preferences = Application.Context.GetSharedPreferences("myPreferences", FileCreationMode.Private);
+            var str = preferences.GetStringSet("myPreferences", new string[0]);
+
             List<Price> prices = ExtractPrices(htmlString);
             return PrintPrices(prices, searchNumber);
         }

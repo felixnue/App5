@@ -8,6 +8,7 @@ using Android.Content;
 using Android.Content.Res;
 using Android.OS;
 using Android.Runtime;
+using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using Java.Util;
@@ -20,6 +21,9 @@ namespace LeoWinner
     {
         public override void OnReceive(Context context, Intent intent)
         {
+            var preferences = Application.Context.GetSharedPreferences("asd", FileCreationMode.Private);
+            var str = preferences.GetString("key", "");
+
             string number = intent.GetStringExtra("number");
 
             Toast.MakeText(context, "Leo Winner searching for number " + number, ToastLength.Long).Show();
@@ -33,8 +37,10 @@ namespace LeoWinner
         private void MakeNotification(Context context, string price, string number)
         {
             var resultIntent = new Intent(context, typeof(MainActivity));
-            resultIntent.SetFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
-            var pending = PendingIntent.GetActivity(context, 0, resultIntent, 0);
+            // resultIntent.SetFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
+            resultIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+ 
+             var pending = PendingIntent.GetActivity(context, 0, resultIntent, 0);
 
             string title = "No price found today :(";
             string text = "Number: " + number;
@@ -45,7 +51,7 @@ namespace LeoWinner
             }
 
             CreateNotificationChannel(context);
-            var builder = new Notification.Builder(context, "LEO_WINNER_CHANNEL_ID")
+            var builder = new NotificationCompat.Builder(context, "LEO_WINNER_CHANNEL_ID")
                 .SetContentTitle(title)
                 .SetContentText(text)
                 .SetSmallIcon(Resource.Drawable.notification_template_icon_bg);
