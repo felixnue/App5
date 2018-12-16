@@ -8,7 +8,7 @@
         android:orientation="vertical"
         android:minWidth="25px"
         android:minHeight="25px"
-        android:layout_width="match_parent"
+        android:layout_width="361.0dp"
         android:layout_height="wrap_content"
         android:id="@+id/linearLayout1">
         <LinearLayout
@@ -33,8 +33,7 @@
                 android:maxLength="5"
                 android:layout_width="103.0dp"
                 android:layout_height="match_parent"
-                android:layout_marginRight="0.0dp"
-                android:numeric="integer" />
+                android:layout_marginRight="0.0dp" />
             <Button
                 android:text="Add"
                 android:layout_width="wrap_content"
@@ -51,11 +50,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/textViewNumbers" />
-        <Button
-            android:text="Alarm"
-            android:id="@+id/buttonAlarm"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:id="@+id/linearLayout3">
+            <Button
+                android:text="Schedule Search"
+                android:id="@+id/buttonAlarm"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
+            <Button
+                android:text="Test in 5 sec"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/buttonTestAlarm" />
+        </LinearLayout>
         <Button
             android:text="Refresh"
             android:id="@+id/buttonRefresh"

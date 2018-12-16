@@ -21,20 +21,20 @@ namespace LeoWinner
     {
         public override void OnReceive(Context context, Intent intent)
         {
-            var preferences = Application.Context.GetSharedPreferences("asd", FileCreationMode.Private);
-            var str = preferences.GetString("key", "");
+            var preferences = context.GetSharedPreferences("myPrefs", FileCreationMode.Private);
+            var numbers = preferences.GetStringSet("keyNumbers", new HashSet<string>()).ToList();
+            // string number = intent.GetStringExtra("number");
 
-            string number = intent.GetStringExtra("number");
+            //  Toast.MakeText(context, "Leo Winner scheduler searching for number " + number, ToastLength.Long).Show();
 
-            Toast.MakeText(context, "Leo Winner searching for number " + number, ToastLength.Long).Show();
+            var html = Task.Run(MainActivity.LoadStringFromUrl).Result;
+            List<Price> prices = PriceScraper.ExtractPrices(html);
+            string searchResult =  PriceHelper.PrintIsWinnerOrLoser(numbers, prices);          
 
-            var html = Task.Run(PriceScraper.LoadStringFromUrl).Result;
-            string price = PriceScraper.GetPriceOfNUmber(number, html);
-
-            MakeNotification(context, price, number);
+            MakeNotification(context, searchResult);
         }
 
-        private void MakeNotification(Context context, string price, string number)
+        private void MakeNotification(Context context, string searchResult)
         {
             var resultIntent = new Intent(context, typeof(MainActivity));
             // resultIntent.SetFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
@@ -42,14 +42,9 @@ namespace LeoWinner
  
              var pending = PendingIntent.GetActivity(context, 0, resultIntent, 0);
 
-            string title = "No price found today :(";
-            string text = "Number: " + number;
-            if (!String.IsNullOrEmpty(price))
-            {
-                title = "You are a WINNER!";
-                text += " Price: " + price;
-            }
-
+            string title = "Leo Winner search";
+            string text = searchResult;
+            
             CreateNotificationChannel(context);
             var builder = new NotificationCompat.Builder(context, "LEO_WINNER_CHANNEL_ID")
                 .SetContentTitle(title)
@@ -60,10 +55,7 @@ namespace LeoWinner
             var manager = NotificationManager.FromContext(context);
 
             int numberInt = -1;
-            if (Int32.TryParse(number, out numberInt))
-            {
-                manager.Notify(numberInt, notification);
-            }
+            manager.Notify(text, numberInt, notification);            
         }
 
         private void CreateNotificationChannel(Context context)

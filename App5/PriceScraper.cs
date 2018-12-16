@@ -1,52 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 using HtmlAgilityPack;
 
 namespace LeoWinner
 {
     internal class PriceScraper
     {
-        public static async Task<string> LoadStringFromUrl()
-        {
-            var uri = @"https://www.leo-erlangen.de/adventskalender/adventskalender-gewinnzahlen/";
-
-            WebClient webClient = new WebClient();
-            string htmlString = await webClient.DownloadStringTaskAsync(uri);
-
-            return htmlString;
-        }       
-
-        public static string GetAllPrices(string searchNumber, string htmlString)
-        {
-            var preferences = Application.Context.GetSharedPreferences("myPreferences", FileCreationMode.Private);
-            var str = preferences.GetStringSet("myPreferences", new string[0]);
-
-            List<Price> prices = ExtractPrices(htmlString);
-            return PrintPrices(prices, searchNumber);
-        }
-
-        // return string.Empty if no price found
-        public static string GetPriceOfNUmber(string number, string htmlString)
-        {
-            List<Price> prices = ExtractPrices(htmlString);
-            var winner = prices.FirstOrDefault(x => x.Numbers.Contains(number));
-            if (winner != null)
-            {
-                return winner.Description;
-            }
-
-            return string.Empty;
-        }
+        
 
         public static bool IsUpToDate(int day, string htmlString)
         {
@@ -54,7 +15,7 @@ namespace LeoWinner
             return prices.Any(x => x.Day == day);
         }
 
-        private static List<Price> ExtractPrices(string htmlString)
+        internal static List<Price> ExtractPrices(string htmlString)
         {
             HtmlDocument htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlString);
@@ -78,58 +39,9 @@ namespace LeoWinner
             return prices;
         }
 
-        private static string PrintPrices(List<Price> prices, string searchNumber)
-        {
-            string pricesString = "Detected the following prices:\n";
-            string stringWinner = string.Empty;
 
-            for (int day = 24; day >= 1; day--)
-            {
-                if (prices.Any(x => x.Day == day))
-                {
-                    pricesString += "Prices of day " + day + "\n";
-                }               
 
-                foreach (var p in prices.Where(x => x.Day == day))
-                {
-                    pricesString += p.ToString() + "\n";
-                    if (p.Numbers.Any(x => x.Equals(searchNumber)))
-                    {
-                        stringWinner += " \n******* WINNNER *******\n\n";
-                        stringWinner += " Your price: " + p.Description;
-                    }
-                }
-            }
-            if (stringWinner == String.Empty)
-            {
-                stringWinner = searchNumber + ": -  Better luck next time :)";
-            }
-            else
-            {
-               // Toast.MakeText(this, stringWinner, ToastLength.Short).Show();
-            }
 
-            return stringWinner + "\n\n" + pricesString;
-        }       
-
-        private class Price
-        {
-            public Price()
-            {
-                Day = -1;
-                Description = "Undefined";
-                Numbers = new List<string>();
-            }
-
-            public int Day;
-            public string Description;
-            public IList<string> Numbers;
-
-            public override string ToString()
-            {
-                return String.Concat("\"", Description, "\"\n", String.Join(" | ", Numbers));
-            }
-        }
 
 
         private static bool TryGetHtmlNodeForDay(int day, HtmlDocument htmlDoc, out HtmlNode nodeFound)
@@ -184,7 +96,7 @@ namespace LeoWinner
                     if (child.NodeType == HtmlNodeType.Element && child.Name == "li")
                     {
                         Price price = GetPriceDecriptionAndNumbers(child);
-                       
+
 
                         price.Day = day;
                         pricesOfDay.Add(price);
@@ -208,7 +120,7 @@ namespace LeoWinner
             return node;
         }
 
-        
+
 
         private static Price GetPriceDecriptionAndNumbers(HtmlNode htmlNode)
         {
@@ -227,13 +139,13 @@ namespace LeoWinner
             }
             if (textNodes.Count >= 2)
             {
-                price = ParsePriceFrom2Texts( textNodes);
+                price = ParsePriceFrom2Texts(textNodes);
             }
             else if (textNodes.Count == 1) // WORKAORUND if there is no <br> -> only one text field -> seperate by the ":" 
                                            // TODO: sonething more intelligent that analyzes if strings are numbers as well
             {
                 string[] newTexts = textNodes[0].Split(new[] { ':' });
-                price = ParsePriceFrom2Texts( newTexts.ToList());
+                price = ParsePriceFrom2Texts(newTexts.ToList());
             }
 
             if (!price.Numbers.Any()) //Error handling try differently, if the numbers are not inside the <li> element!
@@ -247,7 +159,7 @@ namespace LeoWinner
             return price;
         }
 
-       
+
 
         private static List<string> GetTextsOfAllTextElementsInSiblings(HtmlNode node)
         {
@@ -255,9 +167,9 @@ namespace LeoWinner
             while (node != null)
             {
                 //Console.WriteLine("Nodes next sibling: "+ node.OuterHtml);						
-                if(node.NodeType == HtmlNodeType.Text)
+                if (node.NodeType == HtmlNodeType.Text)
                 {
-                    texts.Add( node.InnerText );
+                    texts.Add(node.InnerText);
                     Console.WriteLine("New node of type " + node.NodeType + " found!!!: " + node.OuterHtml);
                     //break;
                 }
@@ -271,13 +183,13 @@ namespace LeoWinner
         {
             Price price = new Price();
 
-            string description  = ParseDescription(texts.First());
-                       
+            string description = ParseDescription(texts.First());
+
 
             if (!string.IsNullOrEmpty(description))
             {
                 price.Description = description;
-               price.Numbers = ParseNumbers(texts[1]);
+                price.Numbers = ParseNumbers(texts[1]);
             }
             else
             {
@@ -289,8 +201,8 @@ namespace LeoWinner
         private static IList<string> ParseAllNumbers(List<string> textsOfAllSiblings)
         {
             List<string> numbbers = new List<string>();
-            foreach(var text in textsOfAllSiblings.Where(x => !string.IsNullOrEmpty(x)))
-            {               
+            foreach (var text in textsOfAllSiblings.Where(x => !string.IsNullOrEmpty(x)))
+            {
                 numbbers.AddRange(ParseNumbers(text));
             }
 
@@ -313,9 +225,28 @@ namespace LeoWinner
             if (description.Last() == ':')
             {
                 description = description.Remove(description.Length - 1); // remove last 
-            }           
+            }
 
             return description;
+        }
+    }
+
+    internal class Price
+    {
+        internal Price()
+        {
+            Day = -1;
+            Description = "Undefined";
+            Numbers = new List<string>();
+        }
+
+        public int Day;
+        public string Description;
+        public IList<string> Numbers;
+
+        public override string ToString()
+        {
+            return String.Concat("\"", Description, "\"\n", String.Join(" | ", Numbers));
         }
     }
 }

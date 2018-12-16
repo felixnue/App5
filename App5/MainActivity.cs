@@ -24,7 +24,7 @@ namespace LeoWinner
         EditText myTextNumberSearch;
         ICollection<string> myNumbers = new List<string>();
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
@@ -41,13 +41,19 @@ namespace LeoWinner
             buttonRefresh.Click += OnButtonRefreshClick;           
 
             myTextNumberSearch = FindViewById<EditText>(Resource.Id.editTextNumber);
-            myTextNumberSearch.KeyPress += OnTextNumberSEarch_KeyPress;
             myTextViewOutput = FindViewById<TextView>(Resource.Id.textViewOutput);
             myTextViewOutput.MovementMethod = new Android.Text.Method.ScrollingMovementMethod();
             Button buttonAlarm = FindViewById<Button>(Resource.Id.buttonAlarm);
             buttonAlarm.Click += OnButtonAlarmCLick;
+            Button buttonTestAlarm = FindViewById<Button>(Resource.Id.buttonTestAlarm);
+            buttonTestAlarm.Click += OnButtonTestAlarmClick;
 
+
+            await RefreshHtml();
+            UpdateSearchResults();
         }
+
+        
 
         private void InitNumbers()
         {
@@ -67,6 +73,7 @@ namespace LeoWinner
             }
             myNumbers.Remove(newNumber);
             SafeAndShowNumbers();
+            UpdateSearchResults();
         }
 
         private void OnButtonAddClick(object sender, EventArgs e)
@@ -78,6 +85,41 @@ namespace LeoWinner
             }
             myNumbers.Add(newNumber);
             SafeAndShowNumbers();
+            UpdateSearchResults();
+        }
+
+        private async void OnButtonRefreshClick(object sender, System.EventArgs e)
+        {
+            await RefreshHtml();
+            UpdateSearchResults();
+            myTextViewOutput.ScrollTo(0, 0);
+        }       
+
+        private void OnButtonAlarmCLick(object sender, EventArgs e)
+        {
+            if (myNumbers == null || !myNumbers.Any()) { return; }
+            SetRepeatingAlarm(myNumbers, false);
+        }
+
+        private void OnButtonTestAlarmClick(object sender, EventArgs e)
+        {
+            if (myNumbers == null || !myNumbers.Any()) { return; }
+            SetRepeatingAlarm(myNumbers, true);
+        }
+
+
+
+        private  void UpdateSearchResults()
+        {
+            try
+            {
+                myTextViewOutput.Text = PriceHelper.GetPricesAsString(myNumbers, myHtml);
+                myTextViewOutput.ScrollTo(0, 0);
+            }
+            catch (System.Exception ex)
+            {
+                myTextViewOutput.Text = ex.Message;
+            }
         }
 
         private void SafeAndShowNumbers()
@@ -96,99 +138,48 @@ namespace LeoWinner
             textViewNumbers.Text = string.Join(", ", myNumbers);
         }
 
-        private async void OnTextNumberSEarch_KeyPress(object sender, Android.Views.View.KeyEventArgs e)
-        {
-            e.Handled = false;
-            if (e.Event.Action == KeyEventActions.Down && e.KeyCode == Keycode.Enter)
-            {
-                try
-                {
-                    if (string.IsNullOrEmpty(myHtml))
-                    {
-                        await RefreshHtml();
-                    }
-                    int num =  Convert.ToInt32( myTextNumberSearch.Text);
-                    myTextViewOutput.Text = PriceScraper.GetAllPrices(myTextNumberSearch.Text, myHtml);
-                    myTextViewOutput.ScrollTo(0, 0);
-                }
-                catch (System.Exception ex)
-                {
-                    myTextViewOutput.Text = ex.Message;
-                }
-
-                finally
-                {
-
-                    e.Handled = true;
-                }
-            }
-        }
-
         private async Task RefreshHtml()
         {
             myTextViewOutput.Text = "Loading website html data...";
-            myHtml = await PriceScraper.LoadStringFromUrl();
+            myHtml = await LoadStringFromUrl();
         }
 
-        private async void OnButtonRefreshClick(object sender, System.EventArgs e)
+        public static async Task<string> LoadStringFromUrl()
         {
-            try
-            {
-                // Remind(DateTime.Now, "Search BUtton", "Was clicked");
-                await RefreshHtml();
-                myTextViewOutput.Text = PriceScraper.GetAllPrices(myTextNumberSearch.Text, myHtml);
-            }
-            catch (System.Exception ex)
-            {
-                myTextViewOutput.Text = ex.Message;
-            }
+            var uri = @"https://www.leo-erlangen.de/adventskalender/adventskalender-gewinnzahlen/";
 
-            myTextViewOutput.ScrollTo(0, 0);
+            WebClient webClient = new WebClient();
+            string htmlString = await webClient.DownloadStringTaskAsync(uri);
+
+            return htmlString;
         }
 
+       
 
-        private void OnButtonAlarmCLick(object sender, EventArgs e)
+        private void SetRepeatingAlarm(ICollection<string> numbers, bool isTest)
         {
-            if (string.IsNullOrEmpty(myTextNumberSearch.Text)) { return; }
+            Intent receiverIntent = new Intent(this, typeof(AlarmReceiver));           
+            AlarmManager alarmManager = (AlarmManager)GetSystemService(AlarmService); 
 
-            SetRepeatingAlarm(myTextNumberSearch.Text);            
-        }
-
-        private void SetRepeatingAlarm(string number)
-        {
-            int numberAsInt = -1;
-            if(!Int32.TryParse(number, out numberAsInt))
+            if (isTest)
             {
-                return;
+                PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, 0, receiverIntent, PendingIntentFlags.CancelCurrent);
+
+                int seconds = 5;              
+                alarmManager.Set(AlarmType.RtcWakeup, JavaSystem.CurrentTimeMillis() + (seconds * 1000), pendingIntent);
+                myTextViewOutput.Text = $"Test Alarm set in {seconds} seconds.";
             }
+            else
+            {
+                PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, 1, receiverIntent, PendingIntentFlags.CancelCurrent);
 
-            //GET TIME IN SECONDS AND INITIALIZE INTENT
-
-            Intent receiverIntent = new Intent(this, typeof(AlarmReceiver));
-            receiverIntent.PutExtra("number", number);
-
-            //PASS CONTEXT,YOUR PRIVATE REQUEST CODE,INTENT OBJECT AND FLAG
-            PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, numberAsInt, receiverIntent, PendingIntentFlags.OneShot);
-            
-            //INITIALIZE ALARM MANAGER
-            AlarmManager alarmManager = (AlarmManager)GetSystemService(AlarmService);
-
-            Java.Util.Calendar calendar = Java.Util.Calendar.Instance;
-            calendar.TimeInMillis = (JavaSystem.CurrentTimeMillis());
-            //calendar.Add(CalendarField.Second, secondsTillAlarm);
-            //calendar.Add(CalendarField.DayOfYear, 1); // tomorrow            
-            calendar.Set(Java.Util.CalendarField.HourOfDay, 8);
-            calendar.Set(Java.Util.CalendarField.Minute, 15); // 15 min
-            
-
-            //SET THE ALARM
-
-            alarmManager.Set(AlarmType.RtcWakeup, JavaSystem.CurrentTimeMillis() + (5 * 1000), pendingIntent);
-            //alarmManager.SetInexactRepeating(AlarmType.RtcWakeup, calendar.TimeInMillis, AlarmManager.IntervalDay , pendingIntent);
-
-            myTextViewOutput.Text = number + ": Repeating daily Alarm set. Next at: " + calendar.Time.ToString();
-            //  Toast.MakeText(this, ToastLength.Long).Show();
-
+                Java.Util.Calendar calendar = Java.Util.Calendar.Instance;
+                calendar.TimeInMillis = (JavaSystem.CurrentTimeMillis() + 10000);                       
+                calendar.Set(Java.Util.CalendarField.HourOfDay, 9);
+           
+                alarmManager.SetRepeating(AlarmType.RtcWakeup, calendar.TimeInMillis, AlarmManager.IntervalDay, pendingIntent);
+                myTextViewOutput.Text = "Repeating daily Alarm set. Begin at: " + calendar.Time.ToString();
+            }
         }
     }
 }
