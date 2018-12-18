@@ -124,6 +124,7 @@ namespace LeoWinner
 
         private static Price GetPriceDecriptionAndNumbers(HtmlNode htmlNode)
         {
+            bool success = false;
             Price price = new Price();
             List<string> textNodes = new List<string>();
 
@@ -139,16 +140,16 @@ namespace LeoWinner
             }
             if (textNodes.Count >= 2)
             {
-                price = ParsePriceFrom2Texts(textNodes);
+                success =  TryParsePriceFrom2Texts(textNodes, out price);
             }
             else if (textNodes.Count == 1) // WORKAORUND if there is no <br> -> only one text field -> seperate by the ":" 
                                            // TODO: sonething more intelligent that analyzes if strings are numbers as well
             {
                 string[] newTexts = textNodes[0].Split(new[] { ':' });
-                price = ParsePriceFrom2Texts(newTexts.ToList());
+                success = TryParsePriceFrom2Texts(newTexts.ToList(),out price);
             }
 
-            if (!price.Numbers.Any()) //Error handling try differently, if the numbers are not inside the <li> element!
+            if (!success || !price.Numbers.Any()) //Error handling try differently, if the numbers are not inside the <li> element!
             {
                 // All following Textnodes are considered to contain numbers potentially..
 
@@ -156,7 +157,12 @@ namespace LeoWinner
                 price.Numbers = ParseAllNumbers(textsOfAllSiblings);
             }
 
-            return price;
+            if (!success || !price.Numbers.Any())
+            {
+                //...
+            }
+
+                return price;
         }
 
 
@@ -179,23 +185,21 @@ namespace LeoWinner
             return texts;
         }
 
-        private static Price ParsePriceFrom2Texts(List<string> texts)
+        private static bool TryParsePriceFrom2Texts(List<string> texts, out Price price)
         {
-            Price price = new Price();
+            bool canParse = false;
+            price = new Price();
 
             string description = ParseDescription(texts.First());
-
-
             if (!string.IsNullOrEmpty(description))
             {
+                price = new Price();
                 price.Description = description;
                 price.Numbers = ParseNumbers(texts[1]);
+                canParse = true;
             }
-            else
-            {
-                price.Description = "[ERROR]. Could not read out the price description.";
-            }
-            return price;
+            
+            return canParse;
         }
 
         private static IList<string> ParseAllNumbers(List<string> textsOfAllSiblings)
@@ -220,9 +224,10 @@ namespace LeoWinner
 
         private static string ParseDescription(string text)
         {
-            string description = text;
-            description = description.Trim();
-            if (description.Last() == ':')
+            if (string.IsNullOrEmpty(text)) return string.Empty;
+
+            string description = text.Trim();
+            if (!string.IsNullOrEmpty(description) && description.Last() == ':')
             {
                 description = description.Remove(description.Length - 1); // remove last 
             }
