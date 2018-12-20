@@ -9,22 +9,29 @@ namespace LeoWinner
     {
         public static bool IsUpToDate(int day, string htmlString)
         {
-            var prices = ExtractPrices(htmlString);
-            return prices.Any(x => x.Day == day);
+            List<Day> days = ExtractPrices(htmlString);
+            return days.Any(x => x.Date == day);
         }
 
-        public static List<Price> ExtractPrices(string htmlString)
+        public static List<Day> ExtractPrices(string htmlString)
         {
             HtmlDocument htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlString);
 
-            List<Price> prices = new List<Price>();
-            for (int day = 24; day >= 1; day--)
+            List<Day> days = new List<Day>();
+            for (int d = 24; d >= 1; d--)
             {
-                prices.AddRange(GetPricesOfDay(day, htmlDoc));
+                var prices = GetPricesOfDay(d, htmlDoc);
+                if (prices.Any())
+                {                   
+                    Day day = new Day(d);
+                    day.Prices = prices;
+                    days.Add(day);
+                }
+             
             }
 
-            return prices;
+            return days;
         }
 
         private static List<Price> GetPricesOfDay(int day, HtmlDocument htmlDoc)
@@ -35,6 +42,16 @@ namespace LeoWinner
                 prices = GetPricesOfDay(day, nodeForDay);
             }
             return prices;
+        }
+
+        public static string GetHeaderStringForDay(int day, HtmlDocument htmlDoc)
+        {
+            string returnString = string.Empty;
+            if (TryGetHtmlNodeForDay(day, htmlDoc, out HtmlNode nodeFound))
+            {
+                returnString = nodeFound.InnerText;
+            }
+            return returnString;
         }
                               
         private static bool TryGetHtmlNodeForDay(int day, HtmlDocument htmlDoc, out HtmlNode nodeFound)
@@ -70,8 +87,8 @@ namespace LeoWinner
         {
             List<Price> pricesOfDay = new List<Price>();
 
-            //debudgString += ("Treffer für Tag " + dayString + "; InnerHtml: " + node.InnerHtml + "\n");
-            //    Console.WriteLine("Parent 2: "+ n.ParentNode.ParentNode.OuterHtml);
+            //  debudgString += ("Treffer für Tag " + dayString + "; InnerHtml: " + node.InnerHtml + "\n");
+            //  Console.WriteLine("Parent 2: "+ n.ParentNode.ParentNode.OuterHtml);
 
             // This works for all but the first day... error on site?
             bool success = TryFindNodeULInSiblings(nodeOfDay.ParentNode.NextSibling, out var nodeUL);
@@ -124,8 +141,6 @@ namespace LeoWinner
             return success;
         }
 
-
-
         private static Price GetPriceDecriptionAndNumbers(HtmlNode htmlNode)
         {
             bool success = false;
@@ -147,10 +162,10 @@ namespace LeoWinner
                 success =  TryParsePriceFrom2Texts(textNodes, out price);
             }
             else if (textNodes.Count == 1) // WORKAORUND if there is no <br> -> only one text field -> seperate by the ":" 
-                                           // TODO: sonething more intelligent that analyzes if strings are numbers as well
+                                           // TODO: something more intelligent that analyzes if strings are numbers as well
             {
                 string[] newTexts = textNodes[0].Split(new[] { ':' });
-                success = TryParsePriceFrom2Texts(newTexts.ToList(),out price);
+                success = TryParsePriceFrom2Texts(newTexts.ToList(), out price);
             }
 
             if (!success || !price.Numbers.Any()) //Error handling try differently, if the numbers are not inside the <li> element!
@@ -166,7 +181,7 @@ namespace LeoWinner
                 //...
             }
 
-                return price;
+            return price;
         }
 
 
@@ -196,8 +211,7 @@ namespace LeoWinner
 
             string description = ParseDescription(texts.First());
             if (!string.IsNullOrEmpty(description))
-            {
-                price = new Price();
+            {                
                 price.Description = description;
                 price.Numbers = ParseNumbers(texts[1]);
                 canParse = true;
@@ -240,22 +254,86 @@ namespace LeoWinner
         }
     }
 
+    public class Day {
+
+        public Day(int date)
+        {
+            Date = date;
+            Header = "undefined";
+            Prices = new List<Price>();
+        }
+
+        public int Date { get; private set; }
+        public string Header;
+        public List<Price> Prices;
+
+        public IList<Price> GetWinningPrices(string number)
+        {
+            return Prices.Where(x => x.IsWinner(number)).ToList();
+        }
+
+    }
+
     public class Price
     {
         internal Price()
         {
+            Header = "undefined";
             Day = -1;
-            Description = "Undefined";
+            Description = "undefined";
             Numbers = new List<string>();
         }
 
         public int Day;
         public string Description;
+        public string Header;
         public IList<string> Numbers;
+        public IEnumerable<int> IntNumbers
+        {
+            get
+            {
+                foreach(string num in Numbers)
+                {
+                    int result = -1;
+                    if (Int32.TryParse(num, out result))
+                    {
+                        yield return result;
+                    }
+                }                
+            }
+        }
+       
+        public bool IsWinner(string number)
+        {
+            return Numbers.Any(x => x.Equals(number, StringComparison.InvariantCultureIgnoreCase));
+        }
 
         public override string ToString()
         {
-            return String.Concat("\"", Description, "\"\n", String.Join(" | ", Numbers));
+            return ToSortedIntString(false);
+        }
+
+        public string ToSortedIntString(bool sorted)
+        {
+            string numbers = sorted ? IntNumbersAsString(true) : NumbersAsString();          
+            return String.Concat("\"", Description, "\"\n    ", numbers);
+        }
+
+        public string IntNumbersAsString(bool sorted)
+        {
+            var numbers = IntNumbers.ToList();
+
+            if (sorted)
+            {
+                numbers.Sort();
+            }
+
+            return string.Concat("[", String.Join("] [", numbers), "]");
+        }
+
+        public string NumbersAsString()
+        {
+            return string.Concat( "[", String.Join("] [", Numbers), "]");
         }
     }
 }

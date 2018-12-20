@@ -12,7 +12,7 @@ using Android.Widget;
 
 namespace LeoWinner
 {
-    internal static class PriceHelper
+    public static class PriceHelper
     {       
 
         //public static string GetPricesAsString(string searchNumber, string htmlString)
@@ -23,24 +23,28 @@ namespace LeoWinner
 
         public static string GetPricesAsString(ICollection<string> searchNumbers, string htmlString)
         {
-            List<Price> prices = PriceScraper.ExtractPrices(htmlString);
-            string strReturn = PrintIsWinnerOrLoser(searchNumbers, prices);
-            return string.Concat(strReturn,PrintPricesOnly(prices));           
+            List<Day> days = PriceScraper.ExtractPrices(htmlString);
+            string strReturn = PrintIsWinnerOrLoser(searchNumbers, days);
+            return string.Concat(strReturn, PrintDays(days));           
         }
 
-        public static string PrintIsWinnerOrLoser(ICollection<string> searchNumbers, List<Price> prices)
+        public static string PrintIsWinnerOrLoser(ICollection<string> searchNumbers, List<Day> days)
         {
             string stringWinner = string.Empty;
 
             for (int day = 24; day >= 1; day--)
             {
-                foreach (var p in prices.Where(x => x.Day == day))
+                Day dayN = days.SingleOrDefault(x => x.Date == day);
+                if (dayN != null)
                 {
-                    foreach (var number in searchNumbers)
+                    foreach (var price in dayN.Prices)
                     {
-                        if (p.Numbers.Any(x => x.Equals(number)))
+                        foreach (var number in searchNumbers)
                         {
-                            stringWinner += $"**** TADAAA! {number} WINS on day {day}! ****\nPrice: {p.Description}\n";
+                            if (price.Numbers.Any(x => x.Equals(number)))
+                            {
+                                stringWinner += $"**** TADAAA! {number} WINS on day {dayN}! ****\nPrice: {price.Description}\n";
+                            }
                         }
                     }
                 }
@@ -53,23 +57,31 @@ namespace LeoWinner
             return stringWinner;
         }
 
-
-        private static string PrintPricesOnly(List<Price> prices)
+        public static string PrintDays(List<Day> days, bool numbersAsInt)
         {
-            string pricesString = "Detected the following prices:\n"; 
+
+            string pricesString = "Detected the following prices:\n";
             for (int day = 24; day >= 1; day--)
             {
-                if (prices.Any(x => x.Day == day))
+                var dayN = days.SingleOrDefault(x => x.Date == day);
+                if (dayN != null)
                 {
                     pricesString += "Prices of day " + day + "\n";
+                    foreach (var p in dayN.Prices)
+                    {
+                        string pricestring = numbersAsInt ? p.ToSortedIntString(true) : p.ToString();
+                        pricesString = String.Concat(pricesString, " - ", pricestring + "\n");
+                    }
                 }
-                foreach (var p in prices.Where(x => x.Day == day))
-                {
-                    pricesString += p.ToString() + "\n";                   
-                }
-            }        
+            }
 
             return pricesString;
+          
+        }
+
+        public static string PrintDays(List<Day> days)
+        {
+            return PrintDays(days, false); 
         }
 
 
@@ -110,11 +122,17 @@ namespace LeoWinner
         // return string.Empty if no price found
         public static string GetPriceOfNUmber(string number, string htmlString)
         {
-            List<Price> prices = PriceScraper.ExtractPrices(htmlString);
-            var winner = prices.FirstOrDefault(x => x.Numbers.Contains(number));
-            if (winner != null)
+            List<Day> days = PriceScraper.ExtractPrices(htmlString);
+
+            List<Price> winners = new List<Price>();
+            foreach (Day d in days)
             {
-                return winner.Description;
+                winners.AddRange( d.GetWinningPrices(number));               
+            }
+
+            if (winners.Any())
+            {
+                return string.Join("\n", winners.Select(x => x.Description));
             }
 
             return string.Empty;

@@ -28,8 +28,8 @@ namespace LeoWinner
             //  Toast.MakeText(context, "Leo Winner scheduler searching for number " + number, ToastLength.Long).Show();
 
             var html = Task.Run(MainActivity.LoadStringFromUrl).Result;
-            List<Price> prices = PriceScraper.ExtractPrices(html);
-            string searchResult =  PriceHelper.PrintIsWinnerOrLoser(numbers, prices);          
+            List<Day> days = PriceScraper.ExtractPrices(html);
+            string searchResult =  PriceHelper.PrintIsWinnerOrLoser(numbers, days);          
 
             MakeNotification(context, searchResult);
         }
