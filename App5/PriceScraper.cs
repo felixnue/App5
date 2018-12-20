@@ -95,11 +95,17 @@ namespace LeoWinner
                 {
                     if (child.NodeType == HtmlNodeType.Element && child.Name == "li")
                     {
-                        Price price = GetPriceDecriptionAndNumbers(child);
+                        try
+                        {
 
-
-                        price.Day = day;
-                        pricesOfDay.Add(price);
+                            Price price = GetPriceDecriptionAndNumbers(child);
+                            price.Day = day;
+                            pricesOfDay.Add(price);
+                        }
+                        catch (Exception ex)
+                        {
+                            pricesOfDay.Add(new Price() { Description = $"ERROR parsing day {day}. Message: \"{ex.Message}\"" });
+                        }
                     }
                 }
             }

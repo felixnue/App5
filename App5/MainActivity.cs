@@ -174,9 +174,11 @@ namespace LeoWinner
                 PendingIntent pendingIntent = PendingIntent.GetBroadcast(this, 1, receiverIntent, PendingIntentFlags.CancelCurrent);
 
                 Java.Util.Calendar calendar = Java.Util.Calendar.Instance;
-                calendar.TimeInMillis = (JavaSystem.CurrentTimeMillis() + 10000);                       
+                calendar.TimeInMillis = (JavaSystem.CurrentTimeMillis());                       
                 calendar.Set(Java.Util.CalendarField.HourOfDay, 9);
-           
+                calendar.Set(Java.Util.CalendarField.Minute, 0);
+                calendar.Set(Java.Util.CalendarField.Second, 0);
+
                 alarmManager.SetRepeating(AlarmType.RtcWakeup, calendar.TimeInMillis, AlarmManager.IntervalDay, pendingIntent);
                 myTextViewOutput.Text = "Repeating daily Alarm set. Begin at: " + calendar.Time.ToString();
             }
