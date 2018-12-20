@@ -38,12 +38,7 @@ namespace LeoWinner
             }
             return prices;
         }
-
-
-
-
-
-
+                              
         private static bool TryGetHtmlNodeForDay(int day, HtmlDocument htmlDoc, out HtmlNode nodeFound)
         {
             bool found = false;
@@ -81,14 +76,14 @@ namespace LeoWinner
             //    Console.WriteLine("Parent 2: "+ n.ParentNode.ParentNode.OuterHtml);
 
             // This works for all but the first day... error on site?
-            HtmlNode nodeUL = tryFindNodeUL(nodeOfDay.ParentNode.NextSibling);
+            bool success = TryFindNodeULInSiblings(nodeOfDay.ParentNode.NextSibling, out var nodeUL);
             // Solution for entry 1:
-            if (nodeUL == null)
+            if (!success)
             {
-                nodeUL = tryFindNodeUL(nodeOfDay.NextSibling);
+                success = TryFindNodeULInSiblings(nodeOfDay.NextSibling, out nodeUL);
             }
 
-            if (nodeUL != null && nodeUL.ChildNodes != null)
+            if (success && nodeUL.ChildNodes != null)
             {
                 //sibling is the ul list of the numbers and prices
                 foreach (HtmlNode child in nodeUL.ChildNodes)
@@ -113,17 +108,22 @@ namespace LeoWinner
             return pricesOfDay;
         }
 
-        private static HtmlNode tryFindNodeUL(HtmlNode node)
+        private static bool TryFindNodeULInSiblings(HtmlNode node, out HtmlNode ulNode)
         {
+            bool success = false;
+
             while (node != null)
             {
                 if (node.NodeType == HtmlNodeType.Element && node.Name == "ul")
                 {
+                    success = true;
                     break;
                 }
                 node = node.NextSibling;
             }
-            return node;
+
+            ulNode = node;
+            return success;
         }
 
 
