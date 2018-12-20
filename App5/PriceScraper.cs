@@ -5,17 +5,15 @@ using HtmlAgilityPack;
 
 namespace LeoWinner
 {
-    internal class PriceScraper
+    public  class PriceScraper
     {
-        
-
         public static bool IsUpToDate(int day, string htmlString)
         {
             var prices = ExtractPrices(htmlString);
             return prices.Any(x => x.Day == day);
         }
 
-        internal static List<Price> ExtractPrices(string htmlString)
+        public static List<Price> ExtractPrices(string htmlString)
         {
             HtmlDocument htmlDoc = new HtmlDocument();
             htmlDoc.LoadHtml(htmlString);
@@ -38,11 +36,6 @@ namespace LeoWinner
             }
             return prices;
         }
-
-
-
-
-
 
         private static bool TryGetHtmlNodeForDay(int day, HtmlDocument htmlDoc, out HtmlNode nodeFound)
         {
@@ -237,7 +230,7 @@ namespace LeoWinner
         }
     }
 
-    internal class Price
+    public class Price
     {
         internal Price()
         {
